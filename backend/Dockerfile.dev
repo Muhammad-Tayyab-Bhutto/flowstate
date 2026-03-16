@@ -1,0 +1,27 @@
+FROM node:20-slim
+
+WORKDIR /app
+
+# Copy root package files
+COPY package*.json ./
+COPY tsconfig.base.json ./
+
+# Copy workspace package files
+COPY shared/package*.json ./shared/
+COPY backend/package*.json ./backend/
+
+# Install all dependencies
+RUN npm ci
+
+# Copy source files
+COPY shared ./shared
+COPY backend ./backend
+
+# Build shared package
+RUN npm run build --workspace=shared
+
+WORKDIR /app/backend
+
+EXPOSE 3001
+
+CMD ["npm", "run", "dev"]

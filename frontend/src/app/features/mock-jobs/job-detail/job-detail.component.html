@@ -1,0 +1,179 @@
+@if (job) {
+  <div class="job-detail-container">
+    <!-- Header Section -->
+    <div class="job-header">
+      <div class="header-content">
+        <div class="company-logo-large">
+          {{ job.company.logo }}
+        </div>
+        <div class="header-info">
+          <h1 class="job-title" data-agent-field="job_title">{{ job.title }}</h1>
+          <p class="company-name" data-agent-field="company_name">{{ job.company.name }}</p>
+          
+          <div class="job-meta-info">
+            <div class="meta-item">
+              <mat-icon>location_on</mat-icon>
+              <span>{{ job.location }}</span>
+            </div>
+            <div class="meta-item">
+              <mat-icon>attach_money</mat-icon>
+              <span>{{ formatSalary(job.salaryMin, job.salaryMax) }}</span>
+            </div>
+            <div class="meta-item">
+              <mat-icon>schedule</mat-icon>
+              <span>{{ job.type }}</span>
+            </div>
+            <div class="meta-item">
+              <mat-icon>work</mat-icon>
+              <span>{{ job.experience }} Level</span>
+            </div>
+          </div>
+
+          <p class="post-date">{{ timeAgo(job.postedDate) }}</p>
+        </div>
+      </div>
+
+      <div class="apply-actions">
+        <button 
+          mat-raised-button 
+          color="primary"
+          [routerLink]="['/mock-jobs', job.id, 'apply']"
+          class="apply-btn"
+          data-agent-action="start_application"
+        >
+          <mat-icon>send</mat-icon>
+          Apply Now
+        </button>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <!-- Main Content -->
+      <div class="main-content">
+        <mat-card class="section-card">
+          <mat-card-header>
+            <mat-card-title>Job Description</mat-card-title>
+          </mat-card-header>
+          <mat-divider></mat-divider>
+          <mat-card-content>
+            <p class="description-text">{{ job.description }}</p>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="section-card">
+          <mat-card-header>
+            <mat-card-title>Key Responsibilities</mat-card-title>
+          </mat-card-header>
+          <mat-divider></mat-divider>
+          <mat-card-content>
+            <ul class="responsibilities-list">
+              @for (resp of job.responsibilities; track resp) {
+                <li>{{ resp }}</li>
+              }
+            </ul>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="section-card">
+          <mat-card-header>
+            <mat-card-title>Requirements</mat-card-title>
+          </mat-card-header>
+          <mat-divider></mat-divider>
+          <mat-card-content>
+            <ul class="requirements-list">
+              @for (req of job.requirements; track req) {
+                <li>{{ req }}</li>
+              }
+            </ul>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="section-card">
+          <mat-card-header>
+            <mat-card-title>Skills & Technologies</mat-card-title>
+          </mat-card-header>
+          <mat-divider></mat-divider>
+          <mat-card-content>
+            <div class="skills-grid">
+              @for (skill of job.skills; track skill) {
+                <mat-chip class="skill-chip">{{ skill }}</mat-chip>
+              }
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <mat-card class="overview-card">
+          <mat-card-header>
+            <mat-card-title>Company Overview</mat-card-title>
+          </mat-card-header>
+          <mat-divider></mat-divider>
+          <mat-card-content>
+            <p class="company-description">{{ job.company.description }}</p>
+            
+            <div class="company-details">
+              <div class="detail-row">
+                <span class="label">Industry:</span>
+                <span class="value">{{ job.company.industry }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Size:</span>
+                <span class="value">{{ job.company.size }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Website:</span>
+                <a href="{{ job.company.website }}" target="_blank" class="website-link">
+                  {{ job.company.website }}
+                </a>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="benefits-card">
+          <mat-card-header>
+            <mat-card-title>Benefits & Perks</mat-card-title>
+          </mat-card-header>
+          <mat-divider></mat-divider>
+          <mat-card-content>
+            <ul class="benefits-list">
+              @for (benefit of job.benefits; track benefit) {
+                <li>
+                  <mat-icon>check_circle</mat-icon>
+                  <span>{{ benefit }}</span>
+                </li>
+              }
+            </ul>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="cta-card">
+          <mat-card-content>
+            <h3>Ready to Apply?</h3>
+            <p>Join {{ job.company.name }} and be part of something amazing!</p>
+            <button 
+              mat-raised-button 
+              color="primary"
+              [routerLink]="['/mock-jobs', job.id, 'apply']"
+              class="full-width-btn"
+              data-agent-action="apply_now"
+            >
+              Apply for this Position
+            </button>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </div>
+} @else {
+  <div class="not-found">
+    <mat-icon>error_outline</mat-icon>
+    <h2>Job Not Found</h2>
+    <p>The position you're looking for doesn't exist or has been filled.</p>
+    <button mat-raised-button color="primary" routerLink="/mock-jobs">
+      Browse All Jobs
+    </button>
+  </div>
+}

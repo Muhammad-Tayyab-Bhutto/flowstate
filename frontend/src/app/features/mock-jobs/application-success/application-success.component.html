@@ -1,0 +1,83 @@
+<div class="success-container">
+  <mat-card class="success-card">
+    <div class="success-icon-wrapper">
+      <div class="success-icon-background">
+        <mat-icon>check</mat-icon>
+      </div>
+    </div>
+
+    <h1 class="success-title">Application Submitted Successfully!</h1>
+    <p class="success-subtitle">Your application has been received and is being reviewed</p>
+
+    <div class="application-details">
+      <div class="detail-row">
+        <div class="detail-label">Position</div>
+        <div class="detail-value" data-agent-field="confirmed_job_title">{{ jobTitle }}</div>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-label">Company</div>
+        <div class="detail-value">{{ companyName }}</div>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-label">Confirmation Number</div>
+        <div class="detail-value confirmation-code" data-agent-field="confirmation_number">
+          <mat-icon>fingerprint</mat-icon>
+          {{ confirmationNumber }}
+        </div>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-label">Submitted On</div>
+        <div class="detail-value" data-agent-field="submission_timestamp">
+          <mat-icon>schedule</mat-icon>
+          {{ submittedAt | date:'MMMM d, y' }} at {{ submittedAt | date:'h:mm a' }}
+        </div>
+      </div>
+    </div>
+
+    <div class="next-steps">
+      <h3>What's Next?</h3>
+      <ul class="steps-list">
+        <li>
+          <mat-icon>email</mat-icon>
+          <span>You'll receive a confirmation email shortly</span>
+        </li>
+        <li>
+          <mat-icon>fact_check</mat-icon>
+          <span>The hiring team will review your application</span>
+        </li>
+        <li>
+          <mat-icon>phone_in_talk</mat-icon>
+          <span>If selected, you'll be contacted for an interview within 5-7 business days</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="action-buttons">
+      <button 
+        mat-raised-button 
+        color="primary"
+        routerLink="/mock-jobs"
+        class="primary-btn"
+        data-agent-action="browse_more_jobs"
+      >
+        <mat-icon>search</mat-icon>
+        Browse More Jobs
+      </button>
+
+      <button 
+        mat-button
+        [routerLink]="['/mock-jobs']"
+        class="secondary-btn"
+      >
+        Return to Job Listings
+      </button>
+    </div>
+  </mat-card>
+
+  <div class="additional-info">
+    <p>Need help? Contact us at <a href="mailto:careers@example.com">careers@example.com</a></p>
+  </div>
+</div>

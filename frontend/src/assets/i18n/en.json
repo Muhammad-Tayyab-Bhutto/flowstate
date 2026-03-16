@@ -1,0 +1,26 @@
+{
+    "COMMON": {
+        "WELCOME": "Welcome to Flowstate",
+        "LOGIN": "Login",
+        "REGISTER": "Create Account",
+        "EMAIL": "Email Address",
+        "PASSWORD": "Password",
+        "NAME": "Full Name",
+        "SUBMIT": "Submit",
+        "LOGOUT": "Log out"
+    },
+    "DASHBOARD": {
+        "OVERVIEW": "Dashboard Overview",
+        "START_SESSION": "Start New Task",
+        "SESSIONS": "History"
+    },
+    "AGENT": {
+        "THINKING": "Agent Thinking",
+        "TASKS": "Recent Actions",
+        "PAUSE": "Pause",
+        "RESUME": "Resume",
+        "CANCEL": "Cancel",
+        "INTERRUPT": "Interrupt or guide agent",
+        "SEND": "Send"
+    }
+}

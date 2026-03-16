@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile.dev
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./frontend:/app/frontend
+      - ./shared:/app/shared
+      - /app/frontend/node_modules
+      - /app/frontend/.next
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
+      - NEXT_PUBLIC_WS_URL=ws://localhost:3001
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=dev-secret-change-in-production
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.dev
+    ports:
+      - '3001:3001'
+    volumes:
+      - ./backend:/app/backend
+      - ./shared:/app/shared
+      - /app/backend/node_modules
+    environment:
+      - PORT=3001
+      - NODE_ENV=development
+      - CORS_ORIGIN=http://localhost:3000
+      - JWT_SECRET=dev-secret-change-in-production
+      - COOKIE_SECRET=dev-cookie-secret
+      - FIREBASE_PROJECT_ID=flowstate-dev
+      - GCP_PROJECT_ID=flowstate-dev
+      - PLAYWRIGHT_SERVICE_URL=http://playwright:3002
+    depends_on:
+      - playwright
+      - firestore-emulator
+
+  playwright:
+    build:
+      context: ./playwright-service
+      dockerfile: Dockerfile
+    ports:
+      - '3002:3002'
+    environment:
+      - PORT=3002
+      - NODE_ENV=development
+      - CORS_ORIGIN=http://backend:3001
+
+  firestore-emulator:
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
+    command: gcloud emulators firestore start --host-port=0.0.0.0:8080
+    ports:
+      - '8080:8080'
+    environment:
+      - FIRESTORE_PROJECT_ID=flowstate-dev
+
+volumes:
+  node_modules:

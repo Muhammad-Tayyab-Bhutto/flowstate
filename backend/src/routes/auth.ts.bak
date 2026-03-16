@@ -1,0 +1,258 @@
+import { FastifyPluginAsync } from 'fastify';
+import { z } from 'zod';
+import bcrypt from 'bcrypt';
+import { nanoid } from 'nanoid';
+import type { User, Tenant } from '@flowstate/shared';
+import { COLLECTIONS } from '@flowstate/shared/constants';
+
+const RegisterSchema = z.object({
+  name: z.string().min(2).max(100),
+  email: z.string().email(),
+  password: z.string().min(8),
+});
+
+const LoginSchema = z.object({
+  email: z.string().email(),
+  password: z.string(),
+});
+
+const OAuthGoogleSchema = z.object({
+  access_token: z.string(),
+  id_token: z.string().optional(),
+});
+
+export const authRoutes: FastifyPluginAsync = async (fastify) => {
+  // Register
+  fastify.post('/register', async (request, reply) => {
+    const body = RegisterSchema.parse(request.body);
+
+    const existingUser = await fastify.firestore
+      .collection(COLLECTIONS.USERS)
+      .where('email', '==', body.email)
+      .limit(1)
+      .get();
+
+    if (!existingUser.empty) {
+      return reply.conflict('User with this email already exists');
+    }
+
+    const hashedPassword = await bcrypt.hash(body.password, 10);
+    const tenantId = nanoid();
+    const userId = nanoid();
+    const now = new Date();
+
+    const tenant: Omit<Tenant, 'id'> = {
+      name: `${body.name}'s Workspace`,
+      owner_id: userId,
+      plan: 'FREE',
+      subscription_status: 'ACTIVE',
+      usage: { tasks_this_month: 0, screenshots_stored: 0, last_reset_at: now },
+      created_at: now,
+      updated_at: now,
+    };
+
+    const user: Omit<User, 'id'> & { password_hash: string } = {
+      email: body.email,
+      name: body.name,
+      avatar_url: null,
+      tenant_id: tenantId,
+      role: 'OWNER',
+      stripe_customer_id: null,
+      password_hash: hashedPassword,
+      created_at: now,
+      updated_at: now,
+    };
+
+    const batch = fastify.firestore.batch();
+    batch.set(fastify.firestore.collection(COLLECTIONS.TENANTS).doc(tenantId), tenant);
+    batch.set(fastify.firestore.collection(COLLECTIONS.USERS).doc(userId), user);
+    await batch.commit();
+
+    return { success: true, message: 'Account created successfully' };
+  });
+
+  // Login
+  fastify.post('/login', async (request, reply) => {
+    const body = LoginSchema.parse(request.body);
+
+    const usersSnapshot = await fastify.firestore
+      .collection(COLLECTIONS.USERS)
+      .where('email', '==', body.email)
+      .limit(1)
+      .get();
+
+    if (usersSnapshot.empty) {
+      return reply.unauthorized('Invalid credentials');
+    }
+
+    const userDoc = usersSnapshot.docs[0]!;
+    const userData = userDoc.data() as User & { password_hash: string };
+
+    const isValid = await bcrypt.compare(body.password, userData.password_hash);
+    if (!isValid) {
+      return reply.unauthorized('Invalid credentials');
+    }
+
+    const accessToken = fastify.jwt.sign({
+      id: userDoc.id,
+      email: userData.email,
+      tenant_id: userData.tenant_id,
+      role: userData.role,
+    });
+
+    const refreshToken = fastify.jwt.sign(
+      { id: userDoc.id, email: userData.email, tenant_id: userData.tenant_id, role: userData.role, type: 'refresh' },
+      { expiresIn: '7d' }
+    );
+
+    reply.setCookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: process.env['NODE_ENV'] === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60,
+    });
+
+    const { password_hash: _, ...userWithoutPassword } = userData;
+
+    return {
+      success: true,
+      data: { access_token: accessToken, user: { ...userWithoutPassword, id: userDoc.id } },
+    };
+  });
+
+  // OAuth Google
+  fastify.post('/oauth/google', async (request, reply) => {
+    const body = OAuthGoogleSchema.parse(request.body);
+
+    const googleResponse = await fetch(
+      `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${body.access_token}`
+    );
+
+    if (!googleResponse.ok) {
+      return reply.unauthorized('Invalid Google token');
+    }
+
+    const googleUser = (await googleResponse.json()) as {
+      sub: string;
+      email: string;
+      name: string;
+      picture: string;
+    };
+
+    const usersSnapshot = await fastify.firestore
+      .collection(COLLECTIONS.USERS)
+      .where('email', '==', googleUser.email)
+      .limit(1)
+      .get();
+
+    let userId: string;
+    let userData: User;
+
+    if (usersSnapshot.empty) {
+      const tenantId = nanoid();
+      userId = nanoid();
+      const now = new Date();
+
+      const tenant: Omit<Tenant, 'id'> = {
+        name: `${googleUser.name}'s Workspace`,
+        owner_id: userId,
+        plan: 'FREE',
+        subscription_status: 'ACTIVE',
+        usage: { tasks_this_month: 0, screenshots_stored: 0, last_reset_at: now },
+        created_at: now,
+        updated_at: now,
+      };
+
+      userData = {
+        id: userId,
+        email: googleUser.email,
+        name: googleUser.name,
+        avatar_url: googleUser.picture,
+        tenant_id: tenantId,
+        role: 'OWNER',
+        stripe_customer_id: null,
+        created_at: now,
+        updated_at: now,
+      };
+
+      const batch = fastify.firestore.batch();
+      batch.set(fastify.firestore.collection(COLLECTIONS.TENANTS).doc(tenantId), tenant);
+      batch.set(fastify.firestore.collection(COLLECTIONS.USERS).doc(userId), userData);
+      await batch.commit();
+    } else {
+      const userDoc = usersSnapshot.docs[0]!;
+      userId = userDoc.id;
+      userData = { ...userDoc.data(), id: userId } as User;
+    }
+
+    const accessToken = fastify.jwt.sign({
+      id: userId,
+      email: userData.email,
+      tenant_id: userData.tenant_id,
+      role: userData.role,
+    });
+
+    const refreshToken = fastify.jwt.sign(
+      { id: userId, email: userData.email, tenant_id: userData.tenant_id, role: userData.role, type: 'refresh' },
+      { expiresIn: '7d' }
+    );
+
+    reply.setCookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: process.env['NODE_ENV'] === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60,
+    });
+
+    return { success: true, data: { access_token: accessToken, user: userData } };
+  });
+
+  // Refresh token
+  fastify.post('/refresh', async (request, reply) => {
+    const refreshToken = request.cookies['refresh_token'];
+
+    if (!refreshToken) {
+      return reply.unauthorized('No refresh token');
+    }
+
+    try {
+      const decoded = fastify.jwt.verify<{ id: string; type?: string }>(refreshToken);
+
+      if (decoded.type !== 'refresh') {
+        return reply.unauthorized('Invalid token type');
+      }
+
+      const userDoc = await fastify.firestore.collection(COLLECTIONS.USERS).doc(decoded.id).get();
+
+      if (!userDoc.exists) {
+        return reply.unauthorized('User not found');
+      }
+
+      const userData = userDoc.data() as User;
+
+      const accessToken = fastify.jwt.sign({
+        id: userDoc.id,
+        email: userData.email,
+        tenant_id: userData.tenant_id,
+        role: userData.role,
+      });
+
+      return { success: true, data: { access_token: accessToken } };
+    } catch {
+      return reply.unauthorized('Invalid refresh token');
+    }
+  });
+
+  // Get current user
+  fastify.get('/me', { onRequest: [fastify.authenticate] }, async (request) => {
+    return { success: true, data: request.user };
+  });
+
+  // Logout
+  fastify.post('/logout', async (_request, reply) => {
+    reply.clearCookie('refresh_token', { path: '/' });
+    return { success: true, message: 'Logged out successfully' };
+  });
+};

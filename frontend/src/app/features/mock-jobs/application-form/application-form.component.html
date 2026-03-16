@@ -1,0 +1,356 @@
+@if (job) {
+  <div class="application-container">
+    <!-- Header -->
+    <div class="application-header">
+      <div class="back-button">
+        <button mat-icon-button routerLink="/mock-jobs/{{ jobId }}">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+      </div>
+      
+      <div class="header-content">
+        <h1>Apply for {{ job.title }}</h1>
+        <p>{{ job.company.name }} • {{ job.location }}</p>
+      </div>
+    </div>
+
+    <!-- Progress Stepper -->
+    <div class="progress-section">
+      <mat-stepper [linear]="true" [(selectedIndex)]="currentStep" class="demo-stepper">
+        <mat-step label="Basic Info"></mat-step>
+        <mat-step label="Professional Info"></mat-step>
+        <mat-step label="Additional Questions"></mat-step>
+      </mat-stepper>
+    </div>
+
+    <form [formGroup]="applicationForm" (ngSubmit)="onSubmit()">
+      <div class="form-content">
+        <!-- Step 1: Basic Information -->
+        @if (currentStep === 0) {
+          <mat-card class="form-card">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>person</mat-icon>
+                Basic Information
+              </mat-card-title>
+            </mat-card-header>
+            <mat-divider></mat-divider>
+            <mat-card-content>
+              <div class="form-grid">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Full Name *</mat-label>
+                  <input 
+                    matInput 
+                    formControlName="fullName"
+                    placeholder="John Doe"
+                    data-agent-field="full_name"
+                  >
+                  @if (f['fullName'].touched && f['fullName'].invalid) {
+                    <mat-error>Full name is required</mat-error>
+                  }
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Email Address *</mat-label>
+                  <input 
+                    matInput 
+                    formControlName="email"
+                    type="email"
+                    placeholder="john@example.com"
+                    data-agent-field="email"
+                  >
+                  @if (f['email'].touched && f['email'].invalid) {
+                    <mat-error>Please enter a valid email</mat-error>
+                  }
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Phone Number *</mat-label>
+                  <input 
+                    matInput 
+                    formControlName="phone"
+                    type="tel"
+                    placeholder="+1 (555) 123-4567"
+                    data-agent-field="phone"
+                  >
+                  @if (f['phone'].touched && f['phone'].invalid) {
+                    <mat-error>Phone number is required</mat-error>
+                  }
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>LinkedIn URL *</mat-label>
+                  <input 
+                    matInput 
+                    formControlName="linkedinUrl"
+                    placeholder="https://linkedin.com/in/yourprofile"
+                    data-agent-field="linkedin_url"
+                  >
+                  @if (f['linkedinUrl'].touched && f['linkedinUrl'].invalid) {
+                    <mat-error>LinkedIn URL is required</mat-error>
+                  }
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>GitHub URL</mat-label>
+                  <input 
+                    matInput 
+                    formControlName="githubUrl"
+                    placeholder="https://github.com/yourusername"
+                    data-agent-field="github_url"
+                  >
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Portfolio URL</mat-label>
+                  <input 
+                    matInput 
+                    formControlName="portfolioUrl"
+                    placeholder="https://yourportfolio.com"
+                    data-agent-field="portfolio_url"
+                  >
+                </mat-form-field>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        }
+
+        <!-- Step 2: Professional Information -->
+        @if (currentStep === 1) {
+          <mat-card class="form-card">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>work</mat-icon>
+                Professional Information
+              </mat-card-title>
+            </mat-card-header>
+            <mat-divider></mat-divider>
+            <mat-card-content>
+              <div class="form-grid">
+                <mat-form-field appearance="outline">
+                  <mat-label>Years of Experience *</mat-label>
+                  <select 
+                    matNativeControl 
+                    formControlName="yearsOfExperience"
+                    data-agent-field="years_of_experience"
+                  >
+                    <option value="" disabled>Select experience</option>
+                    @for (opt of yearsOptions; track opt) {
+                      <option [value]="opt">{{ opt }}</option>
+                    }
+                  </select>
+                  @if (f['yearsOfExperience'].touched && f['yearsOfExperience'].invalid) {
+                    <mat-error>Please select your experience level</mat-error>
+                  }
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Current Company</mat-label>
+                  <input 
+                    matInput 
+                    formControlName="currentCompany"
+                    placeholder="Company Name"
+                    data-agent-field="current_company"
+                  >
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Notice Period *</mat-label>
+                  <select 
+                    matNativeControl 
+                    formControlName="noticePeriod"
+                    data-agent-field="notice_period"
+                  >
+                    <option value="" disabled>Select notice period</option>
+                    @for (opt of noticePeriodOptions; track opt) {
+                      <option [value]="opt">{{ opt }}</option>
+                    }
+                  </select>
+                  @if (f['noticePeriod'].touched && f['noticePeriod'].invalid) {
+                    <mat-error>Please select your notice period</mat-error>
+                  }
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Visa Status *</mat-label>
+                  <select 
+                    matNativeControl 
+                    formControlName="visaStatus"
+                    data-agent-field="visa_status"
+                  >
+                    <option value="" disabled>Select visa status</option>
+                    @for (opt of visaStatusOptions; track opt) {
+                      <option [value]="opt">{{ opt }}</option>
+                    }
+                  </select>
+                  @if (f['visaStatus'].touched && f['visaStatus'].invalid) {
+                    <mat-error>Please select your visa status</mat-error>
+                  }
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Expected Salary *</mat-label>
+                  <input 
+                    matInput 
+                    formControlName="expectedSalary"
+                    placeholder="$150,000"
+                    data-agent-field="expected_salary"
+                  >
+                  @if (f['expectedSalary'].touched && f['expectedSalary'].invalid) {
+                    <mat-error>Expected salary is required</mat-error>
+                  }
+                </mat-form-field>
+
+                <!-- Extra field for demo obstacle -->
+                @if (simulateExtraFormField) {
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Reference Name *</mat-label>
+                    <input 
+                      matInput 
+                      formControlName="referenceName"
+                      placeholder="Professional reference name"
+                      data-agent-field="reference_name"
+                    >
+                    <mat-hint>This field was unexpectedly added</mat-hint>
+                    @if (f['referenceName'].touched && f['referenceName'].invalid) {
+                      <mat-error>Reference name is required</mat-error>
+                    }
+                  </mat-form-field>
+                }
+              </div>
+
+              <div class="upload-section">
+                <h3>Resume Upload</h3>
+                <div class="upload-area" data-agent-field="resume_upload">
+                  <mat-icon>cloud_upload</mat-icon>
+                  <p>Drag and drop your resume here or click to browse</p>
+                  <span class="upload-hint">PDF, DOC, or DOCX (max 5MB)</span>
+                  <input 
+                    type="file" 
+                    accept=".pdf,.doc,.docx"
+                    (change)="onFileSelected($event)"
+                    class="file-input"
+                  >
+                </div>
+              </div>
+
+              <mat-form-field appearance="outline" class="full-width textarea-field">
+                <mat-label>Cover Letter</mat-label>
+                <textarea 
+                  matInput 
+                  formControlName="coverLetter"
+                  rows="6"
+                  placeholder="Tell us why you're interested in this position..."
+                  data-agent-field="cover_letter"
+                ></textarea>
+              </mat-form-field>
+            </mat-card-content>
+          </mat-card>
+        }
+
+        <!-- Step 3: Additional Questions -->
+        @if (currentStep === 2) {
+          <mat-card class="form-card">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>help_outline</mat-icon>
+                Additional Questions
+              </mat-card-title>
+            </mat-card-header>
+            <mat-divider></mat-divider>
+            <mat-card-content>
+              <mat-form-field appearance="outline" class="full-width textarea-field">
+                <mat-label>Why do you want to join {{ job.company.name }}? *</mat-label>
+                <textarea 
+                  matInput 
+                  formControlName="whyJoinUs"
+                  rows="5"
+                  placeholder="Share your motivation for applying to this company..."
+                  data-agent-field="why_join_us"
+                ></textarea>
+              </mat-form-field>
+
+              <div class="radio-group" data-agent-field="willing_to_relocate">
+                <label class="radio-label">Are you willing to relocate?</label>
+                <mat-radio-group formControlName="willingToRelocate">
+                  <mat-radio-button [value]="true">Yes, I'm willing to relocate</mat-radio-button>
+                  <mat-radio-button [value]="false">No, I prefer remote/on-site at current location</mat-radio-button>
+                </mat-radio-group>
+              </div>
+
+              <!-- CAPTCHA Simulation -->
+              @if (simulateCaptcha) {
+                <div class="captcha-section" data-agent-field="captcha">
+                  <h3>Security Verification</h3>
+                  <div class="captcha-box">
+                    <mat-checkbox 
+                      [checked]="captchaVerified"
+                      (change)="verifyCaptcha()"
+                      data-agent-action="verify_captcha"
+                    >
+                      I'm not a robot
+                    </mat-checkbox>
+                    <img src="https://www.gstatic.com/recaptcha/api2/logo_48.png" alt="reCAPTCHA" class="captcha-logo">
+                  </div>
+                  @if (!captchaVerified) {
+                    <mat-error>Please verify the CAPTCHA before submitting</mat-error>
+                  }
+                </div>
+              }
+
+              <div class="terms-section">
+                <p>By submitting this application, you confirm that all information provided is accurate and complete.</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
+
+      <!-- Navigation Buttons -->
+      <div class="form-actions">
+        @if (currentStep > 0) {
+          <button 
+            mat-button 
+            type="button"
+            (click)="previousStep()"
+            class="nav-btn"
+          >
+            <mat-icon>arrow_back</mat-icon>
+            Previous
+          </button>
+        }
+
+        @if (currentStep < 2) {
+          <button 
+            mat-raised-button 
+            color="primary"
+            type="button"
+            (click)="nextStep()"
+            [disabled]="!canProceed()"
+            class="nav-btn next-btn"
+            data-agent-action="next_step"
+          >
+            Next
+            <mat-icon>arrow_forward</mat-icon>
+          </button>
+        } @else {
+          <button 
+            mat-raised-button 
+            color="primary"
+            type="submit"
+            [disabled]="isSubmitting || applicationForm.invalid || (simulateCaptcha && !captchaVerified)"
+            class="submit-btn"
+            data-agent-action="submit_application"
+          >
+            @if (isSubmitting) {
+              <mat-spinner diameter="20"></mat-spinner>
+            } @else {
+              <mat-icon>send</mat-icon>
+            }
+            {{ isSubmitting ? 'Submitting...' : 'Submit Application' }}
+          </button>
+        }
+      </div>
+    </form>
+  </div>
+}
